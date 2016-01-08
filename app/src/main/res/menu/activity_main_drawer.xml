@@ -3,33 +3,41 @@
 
     <group android:checkableBehavior="single">
         <item
-            android:id="@+id/nav_camera"
+            android:id="@+id/new_posts"
             android:icon="@drawable/ic_menu_camera"
-            android:title="Import" />
+            android:title="@string/new_posts" />
         <item
-            android:id="@+id/nav_gallery"
+            android:id="@+id/moderation"
             android:icon="@drawable/ic_menu_gallery"
-            android:title="Gallery" />
+            android:title="@string/moderation" />
         <item
-            android:id="@+id/nav_slideshow"
+            android:id="@+id/tell_story"
             android:icon="@drawable/ic_menu_slideshow"
-            android:title="Slideshow" />
+            android:title="@string/tell_story" />
         <item
-            android:id="@+id/nav_manage"
+            android:id="@+id/most_terrible_stories"
             android:icon="@drawable/ic_menu_manage"
-            android:title="Tools" />
+            android:title="@string/most_terrible_stories" />
+        <item
+            android:id="@+id/random_story"
+            android:icon="@drawable/ic_menu_slideshow"
+            android:title="@string/random_story" />
+        <item
+            android:id="@+id/happy_end"
+            android:icon="@drawable/ic_menu_manage"
+            android:title="@string/happy_end" />
     </group>
 
     <item android:title="Communicate">
         <menu>
             <item
-                android:id="@+id/nav_share"
+                android:id="@+id/about_project"
                 android:icon="@drawable/ic_menu_share"
-                android:title="Share" />
+                android:title="@string/about_project" />
             <item
-                android:id="@+id/nav_send"
+                android:id="@+id/help_all"
                 android:icon="@drawable/ic_menu_send"
-                android:title="Send" />
+                android:title="@string/help_all" />
         </menu>
     </item>
 

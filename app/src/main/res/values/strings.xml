@@ -1,8 +1,20 @@
 <resources>
-    <string name="app_name">KMP</string>
+    <string name="app_name">Kill Me Please</string>
+    <string name="website_url">killpls.me</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
-    <string name="action_settings">Settings</string>
+    <string name="new_posts">Новые</string>
+    <string name="moderation">Модерация</string>
+    <string name="tell_story">Рассказать историю</string>
+    <string name="most_terrible_stories">Самые страшные</string>
+    <string name="random_story">Случайная</string>
+    <string name="happy_end">Happy end</string>
+
+    <string name="about_project">О проекте</string>
+    <string name="help_all">Хочу помочь всем</string>
+
+    <string name="action_settings">Настройки</string>
+    <string name="tagline">Кажется, что жизнь повернулась спиной? Поверьте, бывает и хуже...</string>
 </resources>
