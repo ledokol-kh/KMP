@@ -1,6 +1,9 @@
 package com.kostyabakay.kmp;
 
+import android.app.ProgressDialog;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
@@ -9,20 +12,87 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+
+import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout;
+import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayoutDirection;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import java.io.IOException;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, SwipyRefreshLayout.OnRefreshListener {
+
+    private static final String TAG = "MainActivity";
+    private static final int LAYOUT = R.layout.activity_main;
+    private static final String URL = "http://killpls.me";
+    private static final String URL_MODERATION = "http://killpls.me/moderation/";
+
+    private Toolbar toolbar;
+    private DrawerLayout drawerLayout;
+    private ProgressDialog progressDialog;
+    private SwipyRefreshLayout mSwipyRefreshLayout;
+
+    private NewPostsAsyncTask newPostsAsyncTask;
+    private ModerationAsyncTask moderationAsyncTask;
+
+    public Elements content;
+    public ArrayList<String> titleList = new ArrayList<String>();
+    private ArrayAdapter<String> adapter;
+    private ListView listView;
+
+    private int navigationDrawerItemId;
+    private int loadedPagesCount = 0;
+    private boolean isRefreshed = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        setContentView(LAYOUT);
 
+        initToolbar();
+        initNavigationView();
+        initActionBarDrawerToggle(); // Добавляет возможность открыть NavigationDrawer через значок
+        initFloatingActionButton();
+        initSwipeRefreshLayout();
+
+        listView = (ListView) findViewById(R.id.listView);
+    }
+
+    private void initToolbar() {
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                return false;
+            }
+        });
+    }
+
+    private void initNavigationView() {
+        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+    }
+
+    private void initActionBarDrawerToggle() {
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawerLayout.setDrawerListener(toggle);
+        toggle.syncState();
+    }
+
+    private void initFloatingActionButton() {
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -31,15 +101,15 @@ public class MainActivity extends AppCompatActivity
                         .setAction("Action", null).show();
             }
         });
+    }
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.setDrawerListener(toggle);
-        toggle.syncState();
-
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
+    private void initSwipeRefreshLayout() {
+        mSwipyRefreshLayout = (SwipyRefreshLayout) findViewById(R.id.swipyrefreshlayout);
+        mSwipyRefreshLayout.setOnRefreshListener(this);
+        mSwipyRefreshLayout.setColorSchemeResources(android.R.color.holo_blue_bright,
+                android.R.color.holo_green_light,
+                android.R.color.holo_orange_light,
+                android.R.color.holo_red_light);
     }
 
     @Override
@@ -78,24 +148,198 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
-        int id = item.getItemId();
+        navigationDrawerItemId = item.getItemId();
 
-        if (id == R.id.new_posts) {
-            // Handle the camera action
-        } else if (id == R.id.moderation) {
-
-        } else if (id == R.id.tell_story) {
-
-        } else if (id == R.id.most_terrible_stories) {
-
-        } else if (id == R.id.random_story) {
-
-        } else if (id == R.id.happy_end) {
-
+        if (navigationDrawerItemId == R.id.new_posts) {
+            Log.i(TAG, "Выбрано раздел \"Новые\" в Navigation Drawer");
+            adapter = new ArrayAdapter<String>(this, R.layout.list_item, R.id.item, titleList);
+            isRefreshed = false;
+            loadedPagesCount = 0;
+            newPostsAsyncTask = new NewPostsAsyncTask();
+            newPostsAsyncTask.execute();
+            if (!adapter.isEmpty()) adapter.clear();
+        } else if (navigationDrawerItemId == R.id.moderation) {
+            Log.i(TAG, "Выбрано раздел \"Модерация\" в Navigation Drawer");
+            adapter = new ArrayAdapter<String>(this, R.layout.list_item, R.id.item, titleList);
+            isRefreshed = false;
+            moderationAsyncTask = new ModerationAsyncTask();
+            moderationAsyncTask.execute();
+            if (!adapter.isEmpty()) adapter.clear();
+        } else if (navigationDrawerItemId == R.id.tell_story) {
+            Log.i(TAG, "Выбрано раздел \"Рассказать историю\" в Navigation Drawer");
+            adapter = new ArrayAdapter<String>(this, R.layout.list_item, R.id.item, titleList);
+            if (!adapter.isEmpty()) adapter.clear();
+        } else if (navigationDrawerItemId == R.id.most_terrible_stories) {
+            Log.i(TAG, "Выбрано раздел \"Самые страшные\" в Navigation Drawer");
+            adapter = new ArrayAdapter<String>(this, R.layout.list_item, R.id.item, titleList);
+            if (!adapter.isEmpty()) adapter.clear();
+        } else if (navigationDrawerItemId == R.id.random_story) {
+            Log.i(TAG, "Выбрано раздел \"Случайная\" в Navigation Drawer");
+            adapter = new ArrayAdapter<String>(this, R.layout.list_item, R.id.item, titleList);
+            if (!adapter.isEmpty()) adapter.clear();
+        } else if (navigationDrawerItemId == R.id.happy_end) {
+            Log.i(TAG, "Выбрано раздел \"Happy end\" в Navigation Drawer");
+            adapter = new ArrayAdapter<String>(this, R.layout.list_item, R.id.item, titleList);
+            if (!adapter.isEmpty()) adapter.clear();
+        } else if (navigationDrawerItemId == R.id.about_project) {
+            Log.i(TAG, "Выбрано раздел \"О проекте\" в Navigation Drawer");
+            adapter = new ArrayAdapter<String>(this, R.layout.list_item, R.id.item, titleList);
+            if (!adapter.isEmpty()) adapter.clear();
+        } else if (navigationDrawerItemId == R.id.help_all) {
+            Log.i(TAG, "Выбрано раздел \"Хочу помочь всем\" в Navigation Drawer");
+            adapter = new ArrayAdapter<String>(this, R.layout.list_item, R.id.item, titleList);
+            if (!adapter.isEmpty()) adapter.clear();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    @Override
+    public void onRefresh(SwipyRefreshLayoutDirection direction) {
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (navigationDrawerItemId == R.id.new_posts) {
+                    Log.i(TAG, "Обновленно раздел \"Новые\" в Navigation Drawer");
+                    isRefreshed = true;
+                    adapter.clear();
+                    newPostsAsyncTask = new NewPostsAsyncTask();
+                    newPostsAsyncTask.execute();
+                } else if (navigationDrawerItemId == R.id.moderation) {
+                    Log.i(TAG, "Обновленно раздел \"Модерация\" в Navigation Drawer");
+                    isRefreshed = true;
+                    adapter.clear();
+                    moderationAsyncTask = new ModerationAsyncTask();
+                    moderationAsyncTask.execute();
+                } else if (navigationDrawerItemId == R.id.tell_story) {
+                    Log.i(TAG, "Обновленно раздел \"Рассказать историю\" в Navigation Drawer");
+                } else if (navigationDrawerItemId == R.id.most_terrible_stories) {
+                    Log.i(TAG, "Обновленно раздел \"Самые страшные\" в Navigation Drawer");
+                } else if (navigationDrawerItemId == R.id.random_story) {
+                    Log.i(TAG, "Обновленно раздел \"Случайная\" в Navigation Drawer");
+                } else if (navigationDrawerItemId == R.id.happy_end) {
+                    Log.i(TAG, "Обновленно раздел \"Happy end\" в Navigation Drawer");
+                } else if (navigationDrawerItemId == R.id.about_project) {
+                    Log.i(TAG, "Обновленно раздел \"О проекте\" в Navigation Drawer");
+                } else if (navigationDrawerItemId == R.id.help_all) {
+                    Log.i(TAG, "Обновленно раздел \"Хочу помочь всем\" в Navigation Drawer");
+                } else {
+                    Log.i(TAG, "Попытка обновить главную страницу");
+                }
+
+                // Когда обновление закончено, вызываем метод setRefreshing(boolean) и передаем ему false.
+                mSwipyRefreshLayout.setRefreshing(false);
+            }
+        }, 4000);
+    }
+
+    class NewPostsAsyncTask extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            if (!isRefreshed) {
+                progressDialog = new ProgressDialog(MainActivity.this);
+                progressDialog.setTitle("Новые");
+                progressDialog.setMessage("Загрузка...");
+                progressDialog.setIndeterminate(false);
+                progressDialog.show();
+            }
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            Document doc;
+            try {
+                doc = Jsoup.connect(URL).get(); // Считываем заголовок страницы
+                Elements pageSpan = doc.select("div.paginator > span:first-child");
+                int pageCount = Integer.parseInt(pageSpan.first().text());
+                // Стоит еще проверить, что элементы нашлись, вызовом !pageSpan.isEmpty(),
+                // first() для пустого списка возвращает null.
+                String pageCountString = null;
+
+                if (loadedPagesCount == 0) {
+                    pageCountString = Integer.toString(pageCount);
+                } else if (loadedPagesCount > 0) {
+                    pageCountString = Integer.toString(pageCount - loadedPagesCount);
+                }
+
+                doc = Jsoup.connect("http://killpls.me/page/" + pageCountString).get();
+                parseDocument(doc);
+                loadedPagesCount++;
+
+            } catch (IOException e) {
+                e.printStackTrace(); // Если не получилось считать
+            }
+            return null;
+        }
+
+        public void parseDocument(Document doc) {
+
+            // Парсит посты на странице
+            content = doc.select("[style=margin:0.5em 0;line-height:1.785em]");
+
+            for (Element contents : content) {
+                if (!contents.text().contains("18+")) {
+                    // Выводит только посты без ссылки на 18+
+                    titleList.add(contents.text());
+                }
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            listView.setAdapter(adapter);
+            if (navigationDrawerItemId == R.id.new_posts) progressDialog.dismiss();
+        }
+    }
+
+    class ModerationAsyncTask extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            if (!isRefreshed) {
+                progressDialog = new ProgressDialog(MainActivity.this);
+                progressDialog.setTitle("Модерация");
+                progressDialog.setMessage("Загрузка...");
+                progressDialog.setIndeterminate(false);
+                progressDialog.show();
+            }
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            Document doc;
+            try {
+                doc = Jsoup.connect(URL_MODERATION).get();
+                parseDocument(doc);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        public void parseDocument(Document doc) {
+
+            // Парсит посты на странице
+            content = doc.select("[style=margin:0.5em 0;line-height:1.785em]");
+
+            for (Element contents : content) {
+                titleList.add(contents.text());
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            listView.setAdapter(adapter);
+            if (navigationDrawerItemId == R.id.moderation) progressDialog.dismiss();
+        }
     }
 }
