@@ -5,10 +5,9 @@
     android:orientation="vertical">
 
     <TextView
-        android:id="@+id/item"
+        android:id="@+id/moderation_content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="8dp"
         android:textStyle="normal" />
 
 </LinearLayout>

@@ -19,6 +19,8 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import com.kostyabakay.kmp.model.Moderation;
+import com.kostyabakay.kmp.model.Story;
 import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout;
 import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayoutDirection;
 
@@ -29,6 +31,7 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, SwipyRefreshLayout.OnRefreshListener {
@@ -46,9 +49,10 @@ public class MainActivity extends AppCompatActivity
     private NewPostsAsyncTask newPostsAsyncTask;
     private ModerationAsyncTask moderationAsyncTask;
 
-    public Elements content;
-    public ArrayList<String> titleList = new ArrayList<String>();
-    private ArrayAdapter<String> adapter;
+    public ArrayList<Story> storyArrayList = new ArrayList<Story>();
+    public ArrayList<Moderation> moderationArrayList = new ArrayList<Moderation>();
+    private ArrayAdapter<Story> storyArrayAdapter;
+    private ArrayAdapter<Moderation> moderationArrayAdapter;
     private ListView listView;
 
     private int navigationDrawerItemId;
@@ -152,43 +156,43 @@ public class MainActivity extends AppCompatActivity
 
         if (navigationDrawerItemId == R.id.new_posts) {
             Log.i(TAG, "Выбрано раздел \"Новые\" в Navigation Drawer");
-            adapter = new ArrayAdapter<String>(this, R.layout.list_item, R.id.item, titleList);
+            storyArrayAdapter = new ArrayAdapter<Story>(this, R.layout.list_story_item, R.id.story_content, storyArrayList);
             isRefreshed = false;
             loadedPagesCount = 0;
             newPostsAsyncTask = new NewPostsAsyncTask();
             newPostsAsyncTask.execute();
-            if (!adapter.isEmpty()) adapter.clear();
+            if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
         } else if (navigationDrawerItemId == R.id.moderation) {
             Log.i(TAG, "Выбрано раздел \"Модерация\" в Navigation Drawer");
-            adapter = new ArrayAdapter<String>(this, R.layout.list_item, R.id.item, titleList);
+            moderationArrayAdapter = new ArrayAdapter<Moderation>(this, R.layout.list_moderation_item, R.id.moderation_content, moderationArrayList);
             isRefreshed = false;
             moderationAsyncTask = new ModerationAsyncTask();
             moderationAsyncTask.execute();
-            if (!adapter.isEmpty()) adapter.clear();
+            if (!moderationArrayAdapter.isEmpty()) moderationArrayAdapter.clear();
         } else if (navigationDrawerItemId == R.id.tell_story) {
             Log.i(TAG, "Выбрано раздел \"Рассказать историю\" в Navigation Drawer");
-            adapter = new ArrayAdapter<String>(this, R.layout.list_item, R.id.item, titleList);
-            if (!adapter.isEmpty()) adapter.clear();
+            storyArrayAdapter = new ArrayAdapter<Story>(this, R.layout.list_story_item, R.id.story_content, storyArrayList);
+            if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
         } else if (navigationDrawerItemId == R.id.most_terrible_stories) {
             Log.i(TAG, "Выбрано раздел \"Самые страшные\" в Navigation Drawer");
-            adapter = new ArrayAdapter<String>(this, R.layout.list_item, R.id.item, titleList);
-            if (!adapter.isEmpty()) adapter.clear();
+            storyArrayAdapter = new ArrayAdapter<Story>(this, R.layout.list_story_item, R.id.story_content, storyArrayList);
+            if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
         } else if (navigationDrawerItemId == R.id.random_story) {
             Log.i(TAG, "Выбрано раздел \"Случайная\" в Navigation Drawer");
-            adapter = new ArrayAdapter<String>(this, R.layout.list_item, R.id.item, titleList);
-            if (!adapter.isEmpty()) adapter.clear();
+            storyArrayAdapter = new ArrayAdapter<Story>(this, R.layout.list_story_item, R.id.story_content, storyArrayList);
+            if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
         } else if (navigationDrawerItemId == R.id.happy_end) {
             Log.i(TAG, "Выбрано раздел \"Happy end\" в Navigation Drawer");
-            adapter = new ArrayAdapter<String>(this, R.layout.list_item, R.id.item, titleList);
-            if (!adapter.isEmpty()) adapter.clear();
+            storyArrayAdapter = new ArrayAdapter<Story>(this, R.layout.list_story_item, R.id.story_content, storyArrayList);
+            if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
         } else if (navigationDrawerItemId == R.id.about_project) {
             Log.i(TAG, "Выбрано раздел \"О проекте\" в Navigation Drawer");
-            adapter = new ArrayAdapter<String>(this, R.layout.list_item, R.id.item, titleList);
-            if (!adapter.isEmpty()) adapter.clear();
+            storyArrayAdapter = new ArrayAdapter<Story>(this, R.layout.list_story_item, R.id.story_content, storyArrayList);
+            if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
         } else if (navigationDrawerItemId == R.id.help_all) {
             Log.i(TAG, "Выбрано раздел \"Хочу помочь всем\" в Navigation Drawer");
-            adapter = new ArrayAdapter<String>(this, R.layout.list_item, R.id.item, titleList);
-            if (!adapter.isEmpty()) adapter.clear();
+            storyArrayAdapter = new ArrayAdapter<Story>(this, R.layout.list_story_item, R.id.story_content, storyArrayList);
+            if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -204,13 +208,13 @@ public class MainActivity extends AppCompatActivity
                 if (navigationDrawerItemId == R.id.new_posts) {
                     Log.i(TAG, "Обновленно раздел \"Новые\" в Navigation Drawer");
                     isRefreshed = true;
-                    adapter.clear();
+                    storyArrayAdapter.clear();
                     newPostsAsyncTask = new NewPostsAsyncTask();
                     newPostsAsyncTask.execute();
                 } else if (navigationDrawerItemId == R.id.moderation) {
                     Log.i(TAG, "Обновленно раздел \"Модерация\" в Navigation Drawer");
                     isRefreshed = true;
-                    adapter.clear();
+                    moderationArrayAdapter.clear();
                     moderationAsyncTask = new ModerationAsyncTask();
                     moderationAsyncTask.execute();
                 } else if (navigationDrawerItemId == R.id.tell_story) {
@@ -278,22 +282,35 @@ public class MainActivity extends AppCompatActivity
         }
 
         public void parseDocument(Document doc) {
+            ArrayList<Story> storyArrayList = new ArrayList<Story>();
 
-            // Парсит посты на странице
-            content = doc.select("[style=margin:0.5em 0;line-height:1.785em]");
+            Elements storiesIds = null; // doc.getElementsByClass("col-xs-6");
+            Elements storiesUrls = null;
+            Elements storiesDateAndTime = null;
+            Elements storiesTags = doc.select("[style=text-align:right]");
+            Elements storiesContent = doc.select("[style=margin:0.5em 0;line-height:1.785em]");
+            Elements storiesVotes = null; // doc.getElementsByClass("votelink");
 
-            for (Element contents : content) {
-                if (!contents.text().contains("18+")) {
-                    // Выводит только посты без ссылки на 18+
-                    titleList.add(contents.text());
-                }
+            // Iterator<Element> storiesIdIterator = storiesIds.iterator();
+            // Iterator<Element> storiesUrlIterator = storiesUrls.iterator();
+            // Iterator<Element> storiesDateAndTimeIterator = storiesDateAndTime.iterator();
+            Iterator<Element> storiesTagIterator = storiesTags.iterator();
+            Iterator<Element> storiesContentIterator = storiesContent.iterator();
+            // Iterator<Element> storiesVoteIterator = storiesVotes.iterator();
+
+            while (storiesTagIterator.hasNext() && storiesContentIterator.hasNext()) {
+                storyArrayList.add(new Story(null, null, null, storiesTagIterator.next().text(), storiesContentIterator.next().text(), null));
+            }
+
+            for (Story story : storyArrayList) {
+                MainActivity.this.storyArrayList.add(story);
             }
         }
 
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
-            listView.setAdapter(adapter);
+            listView.setAdapter(storyArrayAdapter);
             if (navigationDrawerItemId == R.id.new_posts) progressDialog.dismiss();
         }
     }
@@ -326,19 +343,25 @@ public class MainActivity extends AppCompatActivity
         }
 
         public void parseDocument(Document doc) {
+            ArrayList<Moderation> moderationArrayList = new ArrayList<Moderation>();
 
-            // Парсит посты на странице
-            content = doc.select("[style=margin:0.5em 0;line-height:1.785em]");
+            Elements moderationContent = doc.select("[style=margin:0.5em 0;line-height:1.785em]");
 
-            for (Element contents : content) {
-                titleList.add(contents.text());
+            Iterator<Element> moderationContentIterator = moderationContent.iterator();
+
+            while (moderationContentIterator.hasNext()) {
+                moderationArrayList.add(new Moderation(moderationContentIterator.next().text()));
+            }
+
+            for (Moderation moderation : moderationArrayList) {
+                MainActivity.this.moderationArrayList.add(moderation);
             }
         }
 
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
-            listView.setAdapter(adapter);
+            listView.setAdapter(moderationArrayAdapter);
             if (navigationDrawerItemId == R.id.moderation) progressDialog.dismiss();
         }
     }
