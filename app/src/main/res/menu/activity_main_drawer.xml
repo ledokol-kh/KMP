@@ -7,7 +7,7 @@
             android:icon="@drawable/ic_menu_camera"
             android:title="@string/new_posts" />
         <item
-            android:id="@+id/moderation"
+            android:id="@+id/moderation_posts"
             android:icon="@drawable/ic_menu_gallery"
             android:title="@string/moderation" />
         <item

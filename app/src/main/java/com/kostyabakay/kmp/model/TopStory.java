@@ -1,10 +1,10 @@
 package com.kostyabakay.kmp.model;
 
 /**
- * Created by Kostya on 03.02.2016.
- * Экземпляр класса Story представляет один пост в разделе "Новые"
+ * Created by Kostya on 07.02.2016.
+ * Экземпляр класса TopStory представляет один пост в разделе "Самые страшные"
  */
-public class Story {
+public class TopStory {
     private String storyId;
     private String storyUrl;
     private String storyDateAndTime;
@@ -12,7 +12,7 @@ public class Story {
     private String storyContent;
     private String storyVote;
 
-    public Story(String storyId, String storyUrl, String storyDateAndTime, String storyTag, String storyContent, String storyVote) {
+    public TopStory(String storyId, String storyUrl, String storyDateAndTime, String storyTag, String storyContent, String storyVote) {
         this.storyId = storyId;
         this.storyUrl = storyUrl;
         this.storyDateAndTime = storyDateAndTime;

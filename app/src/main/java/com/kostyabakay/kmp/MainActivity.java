@@ -19,8 +19,8 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import com.kostyabakay.kmp.model.Moderation;
-import com.kostyabakay.kmp.model.Story;
+import com.kostyabakay.kmp.model.ModerationStory;
+import com.kostyabakay.kmp.model.NewStory;
 import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout;
 import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayoutDirection;
 
@@ -49,10 +49,10 @@ public class MainActivity extends AppCompatActivity
     private NewPostsAsyncTask newPostsAsyncTask;
     private ModerationAsyncTask moderationAsyncTask;
 
-    public ArrayList<Story> storyArrayList = new ArrayList<Story>();
-    public ArrayList<Moderation> moderationArrayList = new ArrayList<Moderation>();
-    private ArrayAdapter<Story> storyArrayAdapter;
-    private ArrayAdapter<Moderation> moderationArrayAdapter;
+    public ArrayList<NewStory> newStoryArrayList = new ArrayList<NewStory>();
+    public ArrayList<ModerationStory> moderationStoryArrayList = new ArrayList<ModerationStory>();
+    private ArrayAdapter<NewStory> storyArrayAdapter;
+    private ArrayAdapter<ModerationStory> moderationArrayAdapter;
     private ListView listView;
 
     private int navigationDrawerItemId;
@@ -156,42 +156,42 @@ public class MainActivity extends AppCompatActivity
 
         if (navigationDrawerItemId == R.id.new_posts) {
             Log.i(TAG, "Выбрано раздел \"Новые\" в Navigation Drawer");
-            storyArrayAdapter = new ArrayAdapter<Story>(this, R.layout.list_story_item, R.id.story_content, storyArrayList);
+            storyArrayAdapter = new ArrayAdapter<NewStory>(this, R.layout.list_new_story_item, R.id.new_story_content, newStoryArrayList);
             isRefreshed = false;
             loadedPagesCount = 0;
             newPostsAsyncTask = new NewPostsAsyncTask();
             newPostsAsyncTask.execute();
             if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
-        } else if (navigationDrawerItemId == R.id.moderation) {
+        } else if (navigationDrawerItemId == R.id.moderation_posts) {
             Log.i(TAG, "Выбрано раздел \"Модерация\" в Navigation Drawer");
-            moderationArrayAdapter = new ArrayAdapter<Moderation>(this, R.layout.list_moderation_item, R.id.moderation_content, moderationArrayList);
+            moderationArrayAdapter = new ArrayAdapter<ModerationStory>(this, R.layout.list_moderation_story_item, R.id.moderation_content, moderationStoryArrayList);
             isRefreshed = false;
             moderationAsyncTask = new ModerationAsyncTask();
             moderationAsyncTask.execute();
             if (!moderationArrayAdapter.isEmpty()) moderationArrayAdapter.clear();
         } else if (navigationDrawerItemId == R.id.tell_story) {
             Log.i(TAG, "Выбрано раздел \"Рассказать историю\" в Navigation Drawer");
-            storyArrayAdapter = new ArrayAdapter<Story>(this, R.layout.list_story_item, R.id.story_content, storyArrayList);
+            storyArrayAdapter = new ArrayAdapter<NewStory>(this, R.layout.list_new_story_item, R.id.new_story_content, newStoryArrayList);
             if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
         } else if (navigationDrawerItemId == R.id.most_terrible_stories) {
             Log.i(TAG, "Выбрано раздел \"Самые страшные\" в Navigation Drawer");
-            storyArrayAdapter = new ArrayAdapter<Story>(this, R.layout.list_story_item, R.id.story_content, storyArrayList);
+            storyArrayAdapter = new ArrayAdapter<NewStory>(this, R.layout.list_new_story_item, R.id.new_story_content, newStoryArrayList);
             if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
         } else if (navigationDrawerItemId == R.id.random_story) {
             Log.i(TAG, "Выбрано раздел \"Случайная\" в Navigation Drawer");
-            storyArrayAdapter = new ArrayAdapter<Story>(this, R.layout.list_story_item, R.id.story_content, storyArrayList);
+            storyArrayAdapter = new ArrayAdapter<NewStory>(this, R.layout.list_new_story_item, R.id.new_story_content, newStoryArrayList);
             if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
         } else if (navigationDrawerItemId == R.id.happy_end) {
             Log.i(TAG, "Выбрано раздел \"Happy end\" в Navigation Drawer");
-            storyArrayAdapter = new ArrayAdapter<Story>(this, R.layout.list_story_item, R.id.story_content, storyArrayList);
+            storyArrayAdapter = new ArrayAdapter<NewStory>(this, R.layout.list_new_story_item, R.id.new_story_content, newStoryArrayList);
             if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
         } else if (navigationDrawerItemId == R.id.about_project) {
             Log.i(TAG, "Выбрано раздел \"О проекте\" в Navigation Drawer");
-            storyArrayAdapter = new ArrayAdapter<Story>(this, R.layout.list_story_item, R.id.story_content, storyArrayList);
+            storyArrayAdapter = new ArrayAdapter<NewStory>(this, R.layout.list_new_story_item, R.id.new_story_content, newStoryArrayList);
             if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
         } else if (navigationDrawerItemId == R.id.help_all) {
             Log.i(TAG, "Выбрано раздел \"Хочу помочь всем\" в Navigation Drawer");
-            storyArrayAdapter = new ArrayAdapter<Story>(this, R.layout.list_story_item, R.id.story_content, storyArrayList);
+            storyArrayAdapter = new ArrayAdapter<NewStory>(this, R.layout.list_new_story_item, R.id.new_story_content, newStoryArrayList);
             if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
         }
 
@@ -211,7 +211,7 @@ public class MainActivity extends AppCompatActivity
                     storyArrayAdapter.clear();
                     newPostsAsyncTask = new NewPostsAsyncTask();
                     newPostsAsyncTask.execute();
-                } else if (navigationDrawerItemId == R.id.moderation) {
+                } else if (navigationDrawerItemId == R.id.moderation_posts) {
                     Log.i(TAG, "Обновленно раздел \"Модерация\" в Navigation Drawer");
                     isRefreshed = true;
                     moderationArrayAdapter.clear();
@@ -282,28 +282,29 @@ public class MainActivity extends AppCompatActivity
         }
 
         public void parseDocument(Document doc) {
-            ArrayList<Story> storyArrayList = new ArrayList<Story>();
+            ArrayList<NewStory> newStoryArrayList = new ArrayList<NewStory>();
 
-            Elements storiesIds = null; // doc.getElementsByClass("col-xs-6");
+            // Выбрать внутри div с классом .row такие div с классом .col-xs-6, у которых нет атрибута style.
+            Elements storiesIds = doc.select("div.row>div.col-xs-6:not([style])");
             Elements storiesUrls = null;
             Elements storiesDateAndTime = null;
             Elements storiesTags = doc.select("[style=text-align:right]");
             Elements storiesContent = doc.select("[style=margin:0.5em 0;line-height:1.785em]");
-            Elements storiesVotes = null; // doc.getElementsByClass("votelink");
+            Elements storiesVotes = doc.select("[style=text-align:center]");
 
-            // Iterator<Element> storiesIdIterator = storiesIds.iterator();
+            Iterator<Element> storiesIdIterator = storiesIds.iterator();
             // Iterator<Element> storiesUrlIterator = storiesUrls.iterator();
             // Iterator<Element> storiesDateAndTimeIterator = storiesDateAndTime.iterator();
             Iterator<Element> storiesTagIterator = storiesTags.iterator();
             Iterator<Element> storiesContentIterator = storiesContent.iterator();
-            // Iterator<Element> storiesVoteIterator = storiesVotes.iterator();
+            Iterator<Element> storiesVoteIterator = storiesVotes.iterator();
 
-            while (storiesTagIterator.hasNext() && storiesContentIterator.hasNext()) {
-                storyArrayList.add(new Story(null, null, null, storiesTagIterator.next().text(), storiesContentIterator.next().text(), null));
+            while (storiesIdIterator.hasNext() && storiesTagIterator.hasNext() && storiesContentIterator.hasNext() && storiesVoteIterator.hasNext()) {
+                newStoryArrayList.add(new NewStory(storiesIdIterator.next().text(), null, null, storiesTagIterator.next().text(), storiesContentIterator.next().text(), storiesVoteIterator.next().text()));
             }
 
-            for (Story story : storyArrayList) {
-                MainActivity.this.storyArrayList.add(story);
+            for (NewStory newStory : newStoryArrayList) {
+                MainActivity.this.newStoryArrayList.add(newStory);
             }
         }
 
@@ -343,18 +344,18 @@ public class MainActivity extends AppCompatActivity
         }
 
         public void parseDocument(Document doc) {
-            ArrayList<Moderation> moderationArrayList = new ArrayList<Moderation>();
+            ArrayList<ModerationStory> moderationStoryArrayList = new ArrayList<ModerationStory>();
 
             Elements moderationContent = doc.select("[style=margin:0.5em 0;line-height:1.785em]");
 
             Iterator<Element> moderationContentIterator = moderationContent.iterator();
 
             while (moderationContentIterator.hasNext()) {
-                moderationArrayList.add(new Moderation(moderationContentIterator.next().text()));
+                moderationStoryArrayList.add(new ModerationStory(moderationContentIterator.next().text()));
             }
 
-            for (Moderation moderation : moderationArrayList) {
-                MainActivity.this.moderationArrayList.add(moderation);
+            for (ModerationStory moderationStory : moderationStoryArrayList) {
+                MainActivity.this.moderationStoryArrayList.add(moderationStory);
             }
         }
 
@@ -362,7 +363,7 @@ public class MainActivity extends AppCompatActivity
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
             listView.setAdapter(moderationArrayAdapter);
-            if (navigationDrawerItemId == R.id.moderation) progressDialog.dismiss();
+            if (navigationDrawerItemId == R.id.moderation_posts) progressDialog.dismiss();
         }
     }
 }
