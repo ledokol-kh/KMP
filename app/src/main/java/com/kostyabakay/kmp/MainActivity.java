@@ -1,6 +1,7 @@
 package com.kostyabakay.kmp;
 
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -19,6 +20,7 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import com.kostyabakay.kmp.adapter.NewStoryAdapter;
 import com.kostyabakay.kmp.model.ModerationStory;
 import com.kostyabakay.kmp.model.NewStory;
 import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout;
@@ -49,10 +51,11 @@ public class MainActivity extends AppCompatActivity
     private NewPostsAsyncTask newPostsAsyncTask;
     private ModerationAsyncTask moderationAsyncTask;
 
-    public ArrayList<NewStory> newStoryArrayList = new ArrayList<NewStory>();
+    public ArrayList<NewStory> newStoryArrayList;
     public ArrayList<ModerationStory> moderationStoryArrayList = new ArrayList<ModerationStory>();
-    private ArrayAdapter<NewStory> storyArrayAdapter;
-    private ArrayAdapter<ModerationStory> moderationArrayAdapter;
+    private NewStoryAdapter newStoryAdapter;
+    private ArrayAdapter<NewStory> storyArrayAdapter; // TODO: удалить
+    private ArrayAdapter<ModerationStory> moderationArrayAdapter; // TODO: удалить
     private ListView listView;
 
     private int navigationDrawerItemId;
@@ -156,12 +159,10 @@ public class MainActivity extends AppCompatActivity
 
         if (navigationDrawerItemId == R.id.new_posts) {
             Log.i(TAG, "Выбрано раздел \"Новые\" в Navigation Drawer");
-            storyArrayAdapter = new ArrayAdapter<NewStory>(this, R.layout.list_new_story_item, R.id.new_story_content, newStoryArrayList);
             isRefreshed = false;
             loadedPagesCount = 0;
-            newPostsAsyncTask = new NewPostsAsyncTask();
+            newPostsAsyncTask = new NewPostsAsyncTask(this);
             newPostsAsyncTask.execute();
-            if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
         } else if (navigationDrawerItemId == R.id.moderation_posts) {
             Log.i(TAG, "Выбрано раздел \"Модерация\" в Navigation Drawer");
             moderationArrayAdapter = new ArrayAdapter<ModerationStory>(this, R.layout.list_moderation_story_item, R.id.moderation_content, moderationStoryArrayList);
@@ -208,8 +209,8 @@ public class MainActivity extends AppCompatActivity
                 if (navigationDrawerItemId == R.id.new_posts) {
                     Log.i(TAG, "Обновленно раздел \"Новые\" в Navigation Drawer");
                     isRefreshed = true;
-                    storyArrayAdapter.clear();
-                    newPostsAsyncTask = new NewPostsAsyncTask();
+                    newStoryAdapter.clear();
+                    newPostsAsyncTask = new NewPostsAsyncTask(MainActivity.this);
                     newPostsAsyncTask.execute();
                 } else if (navigationDrawerItemId == R.id.moderation_posts) {
                     Log.i(TAG, "Обновленно раздел \"Модерация\" в Navigation Drawer");
@@ -240,6 +241,11 @@ public class MainActivity extends AppCompatActivity
     }
 
     class NewPostsAsyncTask extends AsyncTask<String, Void, String> {
+        private Context mContext;
+
+        public NewPostsAsyncTask(Context context) {
+            mContext = context;
+        }
 
         @Override
         protected void onPreExecute() {
@@ -282,8 +288,6 @@ public class MainActivity extends AppCompatActivity
         }
 
         public void parseDocument(Document doc) {
-            ArrayList<NewStory> newStoryArrayList = new ArrayList<NewStory>();
-
             // Выбрать внутри div с классом .row такие div с классом .col-xs-6, у которых нет атрибута style.
             Elements storiesIds = doc.select("div.row>div.col-xs-6:not([style])");
             Elements storiesUrls = null;
@@ -299,19 +303,31 @@ public class MainActivity extends AppCompatActivity
             Iterator<Element> storiesContentIterator = storiesContent.iterator();
             Iterator<Element> storiesVoteIterator = storiesVotes.iterator();
 
-            while (storiesIdIterator.hasNext() && storiesTagIterator.hasNext() && storiesContentIterator.hasNext() && storiesVoteIterator.hasNext()) {
-                newStoryArrayList.add(new NewStory(storiesIdIterator.next().text(), null, null, storiesTagIterator.next().text(), storiesContentIterator.next().text(), storiesVoteIterator.next().text()));
+            newStoryArrayList = new ArrayList<NewStory>();
+            newStoryAdapter = new NewStoryAdapter(mContext, initNewStoryData(storiesIdIterator, storiesTagIterator, storiesContentIterator, storiesVoteIterator));
+        }
+
+        // Этот медот будет инициализировать список даных для ListView
+        private ArrayList<NewStory> initNewStoryData(Iterator<Element> storiesIdIterator, Iterator<Element> storiesTagIterator, Iterator<Element> storiesContentIterator, Iterator<Element> storiesVoteIterator) {
+            while (storiesIdIterator.hasNext()) {
+                String id = storiesIdIterator.next().text();
+                String url = null;
+                String dateAndTime = null;
+                String tag = storiesTagIterator.next().text();
+                String content = storiesContentIterator.next().text();
+                String vote = storiesVoteIterator.next().text();
+
+                NewStory newStory = new NewStory(id, url, dateAndTime, tag, content, vote);
+                newStoryArrayList.add(newStory);
             }
 
-            for (NewStory newStory : newStoryArrayList) {
-                MainActivity.this.newStoryArrayList.add(newStory);
-            }
+            return newStoryArrayList;
         }
 
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
-            listView.setAdapter(storyArrayAdapter);
+            listView.setAdapter(newStoryAdapter);
             if (navigationDrawerItemId == R.id.new_posts) progressDialog.dismiss();
         }
     }

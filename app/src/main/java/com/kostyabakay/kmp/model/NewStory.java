@@ -5,24 +5,48 @@ package com.kostyabakay.kmp.model;
  * Экземпляр класса NewStory представляет один пост в разделе "Новые"
  */
 public class NewStory {
-    private String storyId;
-    private String storyUrl;
-    private String storyDateAndTime;
-    private String storyTag;
-    private String storyContent;
-    private String storyVote;
+    private String mStoryId;
+    private String mStoryUrl;
+    private String mStoryDateAndTime;
+    private String mStoryTag;
+    private String mStoryContent;
+    private String mStoryVote;
 
     public NewStory(String storyId, String storyUrl, String storyDateAndTime, String storyTag, String storyContent, String storyVote) {
-        this.storyId = storyId;
-        this.storyUrl = storyUrl;
-        this.storyDateAndTime = storyDateAndTime;
-        this.storyTag = storyTag;
-        this.storyContent = storyContent;
-        this.storyVote = storyVote;
+        this.mStoryId = storyId;
+        this.mStoryUrl = storyUrl;
+        this.mStoryDateAndTime = storyDateAndTime;
+        this.mStoryTag = storyTag;
+        this.mStoryContent = storyContent;
+        this.mStoryVote = storyVote;
     }
 
     @Override
     public String toString() {
-        return storyId + "\n" + storyUrl + "\n" + storyDateAndTime + "\n" + storyTag + "\n" + storyContent + "\n" + storyVote;
+        return mStoryId + "\n" + mStoryUrl + "\n" + mStoryDateAndTime + "\n" + mStoryTag + "\n" + mStoryContent + "\n" + mStoryVote;
+    }
+
+    public String getStoryId() {
+        return mStoryId;
+    }
+
+    public String getStoryUrl() {
+        return mStoryUrl;
+    }
+
+    public String getStoryDateAndTime() {
+        return mStoryDateAndTime;
+    }
+
+    public String getStoryTag() {
+        return mStoryTag;
+    }
+
+    public String getStoryContent() {
+        return mStoryContent;
+    }
+
+    public String getStoryVote() {
+        return mStoryVote;
     }
 }
