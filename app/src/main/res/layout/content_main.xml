@@ -12,6 +12,12 @@
     tools:context="com.kostyabakay.kmp.MainActivity"
     tools:showIn="@layout/app_bar_main">
 
+    <TextView
+        android:id="@+id/hello_message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/hello_message" />
+
     <com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout
         android:id="@+id/swipyrefreshlayout"
         android:layout_width="wrap_content"
@@ -22,7 +28,7 @@
             android:id="@+id/listView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:divider="#FFCC00"
+            android:divider="#BDBDBD"
             android:dividerHeight="4px" />
 
     </com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout>

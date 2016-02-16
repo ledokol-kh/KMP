@@ -19,6 +19,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.kostyabakay.kmp.adapter.NewStoryAdapter;
 import com.kostyabakay.kmp.model.ModerationStory;
@@ -57,6 +58,7 @@ public class MainActivity extends AppCompatActivity
     private ArrayAdapter<NewStory> storyArrayAdapter; // TODO: удалить
     private ArrayAdapter<ModerationStory> moderationArrayAdapter; // TODO: удалить
     private ListView listView;
+    private TextView helloMessage;
 
     private int navigationDrawerItemId;
     private int loadedPagesCount = 0;
@@ -73,6 +75,7 @@ public class MainActivity extends AppCompatActivity
         initFloatingActionButton();
         initSwipeRefreshLayout();
 
+        helloMessage = (TextView) findViewById(R.id.hello_message);
         listView = (ListView) findViewById(R.id.listView);
     }
 
@@ -159,12 +162,14 @@ public class MainActivity extends AppCompatActivity
 
         if (navigationDrawerItemId == R.id.new_posts) {
             Log.i(TAG, "Выбрано раздел \"Новые\" в Navigation Drawer");
+            helloMessage.setText("");
             isRefreshed = false;
             loadedPagesCount = 0;
             newPostsAsyncTask = new NewPostsAsyncTask(this);
             newPostsAsyncTask.execute();
         } else if (navigationDrawerItemId == R.id.moderation_posts) {
             Log.i(TAG, "Выбрано раздел \"Модерация\" в Navigation Drawer");
+            helloMessage.setText("");
             moderationArrayAdapter = new ArrayAdapter<ModerationStory>(this, R.layout.list_moderation_story_item, R.id.moderation_content, moderationStoryArrayList);
             isRefreshed = false;
             moderationAsyncTask = new ModerationAsyncTask();
@@ -172,26 +177,32 @@ public class MainActivity extends AppCompatActivity
             if (!moderationArrayAdapter.isEmpty()) moderationArrayAdapter.clear();
         } else if (navigationDrawerItemId == R.id.tell_story) {
             Log.i(TAG, "Выбрано раздел \"Рассказать историю\" в Navigation Drawer");
+            helloMessage.setText("");
             storyArrayAdapter = new ArrayAdapter<NewStory>(this, R.layout.list_new_story_item, R.id.new_story_content, newStoryArrayList);
             if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
         } else if (navigationDrawerItemId == R.id.most_terrible_stories) {
             Log.i(TAG, "Выбрано раздел \"Самые страшные\" в Navigation Drawer");
+            helloMessage.setText("");
             storyArrayAdapter = new ArrayAdapter<NewStory>(this, R.layout.list_new_story_item, R.id.new_story_content, newStoryArrayList);
             if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
         } else if (navigationDrawerItemId == R.id.random_story) {
             Log.i(TAG, "Выбрано раздел \"Случайная\" в Navigation Drawer");
+            helloMessage.setText("");
             storyArrayAdapter = new ArrayAdapter<NewStory>(this, R.layout.list_new_story_item, R.id.new_story_content, newStoryArrayList);
             if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
         } else if (navigationDrawerItemId == R.id.happy_end) {
             Log.i(TAG, "Выбрано раздел \"Happy end\" в Navigation Drawer");
+            helloMessage.setText("");
             storyArrayAdapter = new ArrayAdapter<NewStory>(this, R.layout.list_new_story_item, R.id.new_story_content, newStoryArrayList);
             if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
         } else if (navigationDrawerItemId == R.id.about_project) {
             Log.i(TAG, "Выбрано раздел \"О проекте\" в Navigation Drawer");
+            helloMessage.setText("");
             storyArrayAdapter = new ArrayAdapter<NewStory>(this, R.layout.list_new_story_item, R.id.new_story_content, newStoryArrayList);
             if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
         } else if (navigationDrawerItemId == R.id.help_all) {
             Log.i(TAG, "Выбрано раздел \"Хочу помочь всем\" в Navigation Drawer");
+            helloMessage.setText("");
             storyArrayAdapter = new ArrayAdapter<NewStory>(this, R.layout.list_new_story_item, R.id.new_story_content, newStoryArrayList);
             if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
         }
@@ -289,35 +300,41 @@ public class MainActivity extends AppCompatActivity
 
         public void parseDocument(Document doc) {
             // Выбрать внутри div с классом .row такие div с классом .col-xs-6, у которых нет атрибута style.
-            Elements storiesIds = doc.select("div.row>div.col-xs-6:not([style])");
-            Elements storiesUrls = null;
-            Elements storiesDateAndTime = null;
-            Elements storiesTags = doc.select("[style=text-align:right]");
-            Elements storiesContent = doc.select("[style=margin:0.5em 0;line-height:1.785em]");
-            Elements storiesVotes = doc.select("[style=text-align:center]");
+            Elements storiesHeadInfo = doc.select("div.row>div.col-xs-6:not([style])"); // id, дата, время
+            Elements storiesTags = doc.select("[style=text-align:right]"); // теги
+            Elements storiesContent = doc.select("[style=margin:0.5em 0;line-height:1.785em]"); // история
+            Elements storiesVotes = doc.select("[style=text-align:center]"); // голоса
 
-            Iterator<Element> storiesIdIterator = storiesIds.iterator();
-            // Iterator<Element> storiesUrlIterator = storiesUrls.iterator();
-            // Iterator<Element> storiesDateAndTimeIterator = storiesDateAndTime.iterator();
+            Iterator<Element> storiesInfoIterator = storiesHeadInfo.iterator();
             Iterator<Element> storiesTagIterator = storiesTags.iterator();
             Iterator<Element> storiesContentIterator = storiesContent.iterator();
             Iterator<Element> storiesVoteIterator = storiesVotes.iterator();
 
             newStoryArrayList = new ArrayList<NewStory>();
-            newStoryAdapter = new NewStoryAdapter(mContext, initNewStoryData(storiesIdIterator, storiesTagIterator, storiesContentIterator, storiesVoteIterator));
+            newStoryAdapter = new NewStoryAdapter(mContext, parseNewStoryData(storiesInfoIterator, storiesTagIterator, storiesContentIterator, storiesVoteIterator));
         }
 
-        // Этот медот будет инициализировать список даных для ListView
-        private ArrayList<NewStory> initNewStoryData(Iterator<Element> storiesIdIterator, Iterator<Element> storiesTagIterator, Iterator<Element> storiesContentIterator, Iterator<Element> storiesVoteIterator) {
-            while (storiesIdIterator.hasNext()) {
-                String id = storiesIdIterator.next().text();
+        // Этот медот разбирает каждый элемент поста и передает эти данные в конструктор модели
+        private ArrayList<NewStory> parseNewStoryData(Iterator<Element> storiesInfoIterator, Iterator<Element> storiesTagIterator, Iterator<Element> storiesContentIterator, Iterator<Element> storiesVoteIterator) {
+            while (storiesInfoIterator.hasNext()) {
+                String info = storiesInfoIterator.next().text();
+                String[] splittedInfo = info.split("\u0097"); // Разделяем по символу '—'
+                String id = splittedInfo[0].trim();
+                String[] dateAndTime = (splittedInfo[1].trim()).split(","); // Разделяем по символу ','
+                String date = dateAndTime[0].trim();
+                String time = dateAndTime[1].trim();
+
                 String url = null;
-                String dateAndTime = null;
                 String tag = storiesTagIterator.next().text();
                 String content = storiesContentIterator.next().text();
-                String vote = storiesVoteIterator.next().text();
 
-                NewStory newStory = new NewStory(id, url, dateAndTime, tag, content, vote);
+                String vote = storiesVoteIterator.next().text();
+                String[] voteStr = vote.split("\\s+\\s+"); // Разделяем по строке ' &nbsp'
+                vote = voteStr[1];
+                voteStr = vote.split("\\s+"); // Разделяем по символу пробела ' '
+                vote = voteStr[0];
+
+                NewStory newStory = new NewStory(id, url, date, time, tag, content, vote);
                 newStoryArrayList.add(newStory);
             }
 

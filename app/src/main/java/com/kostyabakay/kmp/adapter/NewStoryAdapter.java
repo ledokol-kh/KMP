@@ -1,10 +1,12 @@
 package com.kostyabakay.kmp.adapter;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.kostyabakay.kmp.R;
@@ -53,8 +55,8 @@ public class NewStoryAdapter extends ArrayAdapter<String> {
 
         // Проставляем данные для элементов
         TextView id = (TextView) view.findViewById(R.id.new_story_id);
-        TextView url = (TextView) view.findViewById(R.id.new_story_url);
-        TextView dateAndTime = (TextView) view.findViewById(R.id.new_story_date_and_time);
+        TextView date = (TextView) view.findViewById(R.id.new_story_date);
+        TextView time = (TextView) view.findViewById(R.id.new_story_time);
         TextView tag = (TextView) view.findViewById(R.id.new_story_tag);
         TextView content = (TextView) view.findViewById(R.id.new_story_content);
         TextView vote = (TextView) view.findViewById(R.id.new_story_vote);
@@ -64,11 +66,29 @@ public class NewStoryAdapter extends ArrayAdapter<String> {
 
         // Устанавливаем значения компонентам одного элемента списка
         id.setText(newStory.getStoryId());
-        url.setText(newStory.getStoryUrl());
-        dateAndTime.setText(newStory.getStoryDateAndTime());
+        date.setText(newStory.getStoryDate());
+        time.setText(newStory.getStoryTime());
         tag.setText(newStory.getStoryTag());
         content.setText(newStory.getStoryContent());
         vote.setText(newStory.getStoryVote());
+
+        final ImageView voteYes = (ImageView) view.findViewById(R.id.vote_yes);
+        voteYes.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int color = Color.parseColor("#D50000");
+                voteYes.setColorFilter(color);
+            }
+        });
+
+        final ImageView voteNo = (ImageView) view.findViewById(R.id.vote_no);
+        voteNo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int color = Color.parseColor("#4CAF50");
+                voteNo.setColorFilter(color);
+            }
+        });
 
         return view;
     }

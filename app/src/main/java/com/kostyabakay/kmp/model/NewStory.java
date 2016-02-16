@@ -7,15 +7,17 @@ package com.kostyabakay.kmp.model;
 public class NewStory {
     private String mStoryId;
     private String mStoryUrl;
-    private String mStoryDateAndTime;
+    private String mStoryDate;
+    private String mStoryTime;
     private String mStoryTag;
     private String mStoryContent;
     private String mStoryVote;
 
-    public NewStory(String storyId, String storyUrl, String storyDateAndTime, String storyTag, String storyContent, String storyVote) {
+    public NewStory(String storyId, String storyUrl, String storyDate, String storyTime, String storyTag, String storyContent, String storyVote) {
         this.mStoryId = storyId;
         this.mStoryUrl = storyUrl;
-        this.mStoryDateAndTime = storyDateAndTime;
+        this.mStoryDate = storyDate;
+        this.mStoryTime = storyTime;
         this.mStoryTag = storyTag;
         this.mStoryContent = storyContent;
         this.mStoryVote = storyVote;
@@ -23,7 +25,7 @@ public class NewStory {
 
     @Override
     public String toString() {
-        return mStoryId + "\n" + mStoryUrl + "\n" + mStoryDateAndTime + "\n" + mStoryTag + "\n" + mStoryContent + "\n" + mStoryVote;
+        return mStoryId + "\n" + mStoryUrl + "\n" + mStoryDate + "\n" + mStoryTime + "\n" + mStoryTag + "\n" + mStoryContent + "\n" + mStoryVote;
     }
 
     public String getStoryId() {
@@ -34,8 +36,12 @@ public class NewStory {
         return mStoryUrl;
     }
 
-    public String getStoryDateAndTime() {
-        return mStoryDateAndTime;
+    public String getStoryDate() {
+        return mStoryDate;
+    }
+
+    public String getStoryTime() {
+        return mStoryTime;
     }
 
     public String getStoryTag() {
