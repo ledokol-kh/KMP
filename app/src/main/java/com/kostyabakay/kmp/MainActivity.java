@@ -1,5 +1,6 @@
 package com.kostyabakay.kmp;
 
+import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.AsyncTask;
@@ -19,9 +20,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.TextView;
 
 import com.kostyabakay.kmp.adapter.NewStoryAdapter;
+import com.kostyabakay.kmp.fragment.HappyEndStoryFragment;
+import com.kostyabakay.kmp.fragment.ModerationStoryFragment;
+import com.kostyabakay.kmp.fragment.NewStoryFragment;
+import com.kostyabakay.kmp.fragment.RandomStoryFragment;
+import com.kostyabakay.kmp.fragment.TellStoryFragment;
+import com.kostyabakay.kmp.fragment.TopStoryFragment;
 import com.kostyabakay.kmp.model.ModerationStory;
 import com.kostyabakay.kmp.model.NewStory;
 import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout;
@@ -36,6 +42,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+/**
+ * Created by Kostya on 08.01.2016.
+ */
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, SwipyRefreshLayout.OnRefreshListener {
 
@@ -58,7 +67,13 @@ public class MainActivity extends AppCompatActivity
     private ArrayAdapter<NewStory> storyArrayAdapter; // TODO: удалить
     private ArrayAdapter<ModerationStory> moderationArrayAdapter; // TODO: удалить
     private ListView listView;
-    private TextView helloMessage;
+
+    NewStoryFragment newStoryFragment;
+    ModerationStoryFragment moderationStoryFragment;
+    TellStoryFragment tellStoryFragment;
+    TopStoryFragment topStoryFragment;
+    RandomStoryFragment randomStoryFragment;
+    HappyEndStoryFragment happyEndStoryFragment;
 
     private int navigationDrawerItemId;
     private int loadedPagesCount = 0;
@@ -73,10 +88,16 @@ public class MainActivity extends AppCompatActivity
         initNavigationView();
         initActionBarDrawerToggle(); // Добавляет возможность открыть NavigationDrawer через значок
         initFloatingActionButton();
-        initSwipeRefreshLayout();
+        // initSwipeRefreshLayout(); TODO: NPE
 
-        helloMessage = (TextView) findViewById(R.id.hello_message);
         listView = (ListView) findViewById(R.id.listView);
+
+        newStoryFragment = new NewStoryFragment();
+        moderationStoryFragment = new ModerationStoryFragment();
+        tellStoryFragment = new TellStoryFragment();
+        topStoryFragment = new TopStoryFragment();
+        randomStoryFragment = new RandomStoryFragment();
+        happyEndStoryFragment = new HappyEndStoryFragment();
     }
 
     private void initToolbar() {
@@ -160,52 +181,42 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         navigationDrawerItemId = item.getItemId();
 
+        FragmentTransaction ft = getFragmentManager().beginTransaction();
+
         if (navigationDrawerItemId == R.id.new_posts) {
             Log.i(TAG, "Выбрано раздел \"Новые\" в Navigation Drawer");
-            helloMessage.setText("");
+            ft.replace(R.id.container, newStoryFragment);
             isRefreshed = false;
             loadedPagesCount = 0;
             newPostsAsyncTask = new NewPostsAsyncTask(this);
             newPostsAsyncTask.execute();
         } else if (navigationDrawerItemId == R.id.moderation_posts) {
             Log.i(TAG, "Выбрано раздел \"Модерация\" в Navigation Drawer");
-            helloMessage.setText("");
-            moderationArrayAdapter = new ArrayAdapter<ModerationStory>(this, R.layout.list_moderation_story_item, R.id.moderation_content, moderationStoryArrayList);
+            ft.replace(R.id.container, moderationStoryFragment);
+            // TODO: Custom adapter
+            // moderationArrayAdapter = new ArrayAdapter<ModerationStory>(this, R.layout.list_moderation_story_item, R.id.moderation_content, moderationStoryArrayList);
             isRefreshed = false;
             moderationAsyncTask = new ModerationAsyncTask();
             moderationAsyncTask.execute();
-            if (!moderationArrayAdapter.isEmpty()) moderationArrayAdapter.clear();
         } else if (navigationDrawerItemId == R.id.tell_story) {
             Log.i(TAG, "Выбрано раздел \"Рассказать историю\" в Navigation Drawer");
-            helloMessage.setText("");
-            storyArrayAdapter = new ArrayAdapter<NewStory>(this, R.layout.list_new_story_item, R.id.new_story_content, newStoryArrayList);
-            if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
+            ft.replace(R.id.container, tellStoryFragment);
         } else if (navigationDrawerItemId == R.id.most_terrible_stories) {
             Log.i(TAG, "Выбрано раздел \"Самые страшные\" в Navigation Drawer");
-            helloMessage.setText("");
-            storyArrayAdapter = new ArrayAdapter<NewStory>(this, R.layout.list_new_story_item, R.id.new_story_content, newStoryArrayList);
-            if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
+            ft.replace(R.id.container, topStoryFragment);
         } else if (navigationDrawerItemId == R.id.random_story) {
             Log.i(TAG, "Выбрано раздел \"Случайная\" в Navigation Drawer");
-            helloMessage.setText("");
-            storyArrayAdapter = new ArrayAdapter<NewStory>(this, R.layout.list_new_story_item, R.id.new_story_content, newStoryArrayList);
-            if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
+            ft.replace(R.id.container, randomStoryFragment);
         } else if (navigationDrawerItemId == R.id.happy_end) {
             Log.i(TAG, "Выбрано раздел \"Happy end\" в Navigation Drawer");
-            helloMessage.setText("");
-            storyArrayAdapter = new ArrayAdapter<NewStory>(this, R.layout.list_new_story_item, R.id.new_story_content, newStoryArrayList);
-            if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
+            ft.replace(R.id.container, happyEndStoryFragment);
         } else if (navigationDrawerItemId == R.id.about_project) {
             Log.i(TAG, "Выбрано раздел \"О проекте\" в Navigation Drawer");
-            helloMessage.setText("");
-            storyArrayAdapter = new ArrayAdapter<NewStory>(this, R.layout.list_new_story_item, R.id.new_story_content, newStoryArrayList);
-            if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
         } else if (navigationDrawerItemId == R.id.help_all) {
             Log.i(TAG, "Выбрано раздел \"Хочу помочь всем\" в Navigation Drawer");
-            helloMessage.setText("");
-            storyArrayAdapter = new ArrayAdapter<NewStory>(this, R.layout.list_new_story_item, R.id.new_story_content, newStoryArrayList);
-            if (!storyArrayAdapter.isEmpty()) storyArrayAdapter.clear();
         }
+
+        ft.commit();
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
@@ -344,7 +355,7 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
-            listView.setAdapter(newStoryAdapter);
+            listView.setAdapter(newStoryAdapter); // TODO: NPE
             if (navigationDrawerItemId == R.id.new_posts) progressDialog.dismiss();
         }
     }
@@ -395,7 +406,7 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
-            listView.setAdapter(moderationArrayAdapter);
+            listView.setAdapter(moderationArrayAdapter); // TODO: NPE
             if (navigationDrawerItemId == R.id.moderation_posts) progressDialog.dismiss();
         }
     }
