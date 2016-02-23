@@ -12,7 +12,7 @@
         app:direction="both">
 
         <ListView
-            android:id="@+id/listView"
+            android:id="@+id/new_story_list_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:divider="#BDBDBD"
